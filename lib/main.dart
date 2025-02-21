@@ -1,8 +1,14 @@
+import 'package:appdev_spring_25/product_card.dart';
+import 'package:appdev_spring_25/providers/character_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(ChangeNotifierProvider(
+      create: (context) => CharacterProvider(), child: MyApp()));
 }
+
+//barrel import parhna
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -11,6 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -31,106 +38,62 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // int _counter = 0;
-
-  final List<String> _data = [
-    'Apple',
-    'Banana',
-    'Cherry',
-    'Date',
-    'Mango',
-    'Grape'
-  ];
-
-  // void _incrementCounter() {
-  //   setState(() {
-  //     _counter++;
-  //   });
-  // }
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CharacterProvider>(context, listen: false).fetchCharacters();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-              onPressed: () {
-                _showMyDialog();
-              },
-              icon: Icon(Icons.logout))
-        ],
-      ),
-      body: ListView.separated(
-          separatorBuilder: (context, i) => SizedBox(
-                height: 8,
-              ),
-          itemCount:
-              _data.length, //scrolldirection vertical bhi kardo agar karni ho
-          itemBuilder: (context, i) {
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Card(
-                color: Colors.orange,
-                elevation: 2,
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.arrow_drop_down_circle),
-                      title: Text('Card Title One'),
-                      subtitle: Text(
-                        'Secondary Text',
-                        style: TextStyle(color: Colors.black.withOpacity(0.6)),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text('Card Body',
-                          style:
-                              TextStyle(color: Colors.black.withOpacity(0.6))),
-                    ),
-                    Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-                      TextButton(
-                          onPressed: () {}, child: const Text('action 1')),
-                      TextButton(
-                          onPressed: () {}, child: const Text('action 2')),
-                    ]),
-                    Image.network(
-                        'https://images.pexels.com/photos/2325447/pexels-photo-2325447.jpeg'),
-                  ],
-                ),
-              ),
-            );
-          }),
-    );
-  }
+    final refProvider = Provider.of<CharacterProvider>(context);
 
-  Future<void> _showMyDialog() {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('AlertDialog Title'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('This is a demo alert dialog.'),
-                Text('Would you like to approve of this message?'),
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Avatar Characters'),
+          centerTitle: true,
+        ),
+        body: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: [
+                if (refProvider.isLoading)
+                  CircularProgressIndicator()
+                else if (refProvider.characters.isNotEmpty) ...[
+                  Expanded(
+                    child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 0.7,
+                        ),
+                        itemCount: refProvider.characters.length,
+                        itemBuilder: (context, i) {
+                          final character = refProvider.characters[i];
+                          return CharacterCard(char: character);
+                        }),
+                  )
+                ]
               ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Approve'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+            ))
+        //       } else {
+        //         return GridView.builder(
+        //             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        //               crossAxisCount: 2,
+        //               crossAxisSpacing: 10,
+        //               mainAxisSpacing: 10,
+        //               childAspectRatio: 0.7,
+        //             ),
+        //             itemCount: snapshot.data!.length,
+        //             itemBuilder: (context, i) {
+        //               final character = snapshot.data![i];
+        //               return CharacterCard(char: character);
+        //             });
+        //       }
+        //     })
         );
-      },
-    );
   }
 }
